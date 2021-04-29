@@ -1,0 +1,15 @@
+<html>
+<body>
+    <h1>Here is the outlook for {{your_occupation}}:<br/></h1>
+    <h2>There are currently {{current_emp}} {{your_occupation}} employed in Michigan<br/></h2>
+
+    <h2>This is how the median hourly wage for {{your_occupation}} stacks up to the state median:<br/></h2>
+    {{plot_div_2 | safe}}
+
+    <h2>Here are a few active openings for {{your_occupation}} in Ann Arbor, MI:<br/></h2>
+{% for posting in results_list %}
+    {{posting}}</br>
+{% endfor %}
+
+</body>
+</html>

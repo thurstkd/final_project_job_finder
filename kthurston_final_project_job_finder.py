@@ -15,23 +15,9 @@ Just select from the list of common occupations to get started.
 """
 HTTP Type: 	GET
 URL (JSON): 	https://api.bls.gov/publicAPI/v2/timeseries/data/
-URL for Excel output: 	https://api.bls.gov/publicAPI/v2/timeseries/data/.xlsx
-Payload: 	series_id
-Example Payload: LAUCN040010000000005
 
 https://api.bls.gov/publicAPI/v2/timeseries/data/?&
 catalog=true&startyear=2010&endyear=2014&calculations=true &annualaverage=true&aspects=true
-
-Key to Occupational Employment and Wage Statistics Data:
-OE: data prefixx
-Michigan type code: S
-Michigan area code: 260000000
-Industry code: optional 6 dig naics; 000000 for all
-Occupation: 6 digit SOC
-Last 2 digits: 
-data_type_code	data_type_text
-01	Employment
-08	Hourly median wage
 
 
  """                   
@@ -61,45 +47,39 @@ def make_list_of_occ_choices(soc_list):
     """
     Takes list of dictionaries (SOC_CACHE) and makes them into an html-formatted string to be used as choices in flask app.
     """
-    occ_selector = ""
+    occ_selector = []
     for occ in soc_list:
         occ_name = occ["Occupation Name"] 
+        occ_soc = occ["SOC Code"] 
         occ_name_search = occ_name.lower().replace(" ","")
-        occ_name_html = f"<option value='{occ_name_search}'>{occ_name.title()}</option>"
-        occ_selector=occ_selector+occ_name_html
+        occ_name_title = occ_name.title()
+        occ_name_html = [occ_name_search, occ_name_title, occ_soc]
+        #occ_name_html = f"<option value='{occ_name_search}'>{occ_name.title()}</option>"
+        occ_selector.append(occ_name_html)
 
     return occ_selector
 
-def find_bls_data(job_keyword):
+
+
+def find_bls_data(job_soc):
     """
     I am a docstring and darn it I should be informative
     """
-    response = requests.get("https://api.bls.gov/publicAPI/v2/timeseries/data/LAUCN040010000000005?registrationkey="+bls_secrets.api_key+"&latest=true")
-    json_tst = response.text
-    emp = json.loads(json_tst)["Results"]["series"]
-    print(emp[0]['data'])
+    wage_response = requests.get("https://api.bls.gov/publicAPI/v2/timeseries/data/OEUS2600000000000"+job_soc+"08?registrationkey="+bls_secrets.api_key+"&latest=true")
+    json_tst = wage_response.text
+    wage_list = json.loads(json_tst)["Results"]["series"]
+    median_wage = wage_list[0]['data'][0]['value']
+    print(median_wage)
 
+    emp_response = requests.get("https://api.bls.gov/publicAPI/v2/timeseries/data/OEUS2600000000000"+job_soc+"01?registrationkey="+bls_secrets.api_key+"&latest=true")
+    json_tst2 = emp_response.text
+    emp_list = json.loads(json_tst2)["Results"]["series"]
+    current_emp = emp_list[0]['data'][0]['value']
+    
+    job_data = [current_emp, median_wage]
 
-    BLS_CACHE['test'] = emp[0]['data']
+    return job_data
 
-    print(BLS_CACHE)
-    return emp
-
-def graph_employment(emp_by_year): 
-    """
-    I am a docstring and darn it I should be informative
-    """
-    emp_by_year = []
-    years = []
-    basic_layout = go.Layout(title="Projected Employment for Your Selected Occupation")
-    fig = go.Figure(data=go.Scatter(x=years, y=emp_by_year), layout=basic_layout)
-    return fig
-
-"""
-INDEED_BASE_URL = 'https://www.indeed.com/jobs?q=&l=Ann+Arbor%2C+MI'
-
-keyword = input
-"""
 
 def search_postings(job_keyword):
     """
@@ -110,34 +90,22 @@ def search_postings(job_keyword):
     soup = BeautifulSoup(indeed_response.text, 'html.parser')
 
     results_number = soup.find('div', id="searchCountPages")
-    print(results_number)
     POSTING_parent = soup.find('td', id='resultsCol')
 
     postings = POSTING_parent.find_all('div', class_='jobsearch-SerpJobCard unifiedRow row result')
-    test_posting_title = None
-    test_posting_employer = None
-    your_available_openings_html = ""
-    #your_available_openings_list = []
+
+    your_available_openings_html = []
 
     for posting in postings:
-        job_tag = posting.find('a')
-        test_posting_title = job_tag['title']
+        posting_job_title = posting.find('a', class_="jobtitle turnstileLink")
+        test_posting_title = posting_job_title["title"]
         test_posting_employer = posting.find('span', class_="company").text.strip()
-    #make an allowance for missing employers
-        test_posting_str = f"{test_posting_title} for {test_posting_employer}<br/>"
-    #    your_available_openings_list.append(test_posting_str)
-        your_available_openings_html=your_available_openings_html+test_posting_str
+        test_posting_str = f"{test_posting_title} for {test_posting_employer}"
+        your_available_openings_html.append(test_posting_str)
 
-    INDEED_CACHE[job_keyword] = your_available_openings_html
-    #print(INDEED_CACHE)
+    INDEED_CACHE[job_keyword] = [results_number, your_available_openings_html]
+
     return your_available_openings_html
-"""
-file1 = open("SoupPretty.txt", "a")
-#a = append only; w = write only and would keep overwriting
-file1.write(soup.prettify())
-file1.close()
-"""
-a2_median = None
 
 
 def graph_wage(occupation, query_result_wage): 
@@ -145,32 +113,43 @@ def graph_wage(occupation, query_result_wage):
     I am a docstring and darn it I should be informative
     """
     wages = [19.67, query_result_wage]
-    jobs_to_compare = ["Ann Arbor Median", occupation]
-    bar_data = go.Bar(x=wages, y=jobs_to_compare)
-    basic_layout = go.Layout(title="Wages for Your Selected Job Compared to the Local Median")
+    jobs_to_compare = ["Michigan Median", occupation]
+    bar_data = go.Bar(x=jobs_to_compare, y=wages)
+    basic_layout = go.Layout(title="Hourly Earnings for Your Selected Job Compared to the State Median")
     fig = go.Figure(data=bar_data, layout=basic_layout)
+    #fig.show()
     return fig
 
 
+in_demand = save_in_demand_jobs()
+options = make_list_of_occ_choices(in_demand)
+occ_dict = {}
+for occ in options:
+    occ_dict[occ[0]] = [occ[1], occ[2]]
 
+SOC_CACHE = save_in_demand_jobs()
+#print(SOC_CACHE)
 
 @app.route('/')
-def index():     
-    in_demand = save_in_demand_jobs()
-    options = make_list_of_occ_choices(in_demand)
+def index(): 
     return render_template('occupation_choice_page.html', list_of_occ_choices=options)
 
 
 @app.route('/handle_form', methods=['POST'])
 def handle_the_form():
     your_occupation = request.form["occupations"]
-    bls_result = find_bls_data(your_occupation)
-    emp_graph = graph_employment(bls_result)
-    wage_graph = graph_wage(your_occupation, bls_result)
+    nice_name = occ_dict[your_occupation][0]
+    bls_result = find_bls_data(occ_dict[your_occupation][1])
+    emp_graph = bls_result[0]
+    wage_graph = graph_wage(nice_name, bls_result[1])
+    div=wage_graph.to_html(full_html=False)
     postings_list = search_postings(your_occupation)
     return render_template('occupation_results.html', 
-        your_occupation=your_occupation, plot_div_1=emp_graph, plot_div_2=wage_graph, results_list=postings_list)
+        your_occupation=nice_name, current_emp=emp_graph, plot_div_2=div, results_list=postings_list)
+
 
 if __name__ == '__main__':  
     print('starting Flask app', app.name)  
+    #in_demand = save_in_demand_jobs()
+    #options = make_list_of_occ_choices(in_demand)
     app.run(debug=True)

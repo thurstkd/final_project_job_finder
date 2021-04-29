@@ -1,0 +1,20 @@
+<html>
+<body>
+    <form action="/handle_form" method="POST">
+    <p>
+    Choose an occupation to learn more about it!
+
+    <select name="occupations">
+{% for occ in list_of_occ_choices %}
+    <option value={{occ[0]}}>{{occ[1]}}</option>
+{% endfor %}
+    </select>
+    </p>
+    <input type="submit" value="Submit Choice"/>
+
+
+
+
+    </form>
+</body>
+</html>
