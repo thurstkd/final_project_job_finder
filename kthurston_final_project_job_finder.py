@@ -50,10 +50,11 @@ def make_list_of_occ_choices(soc_list):
     occ_selector = []
     for occ in soc_list:
         occ_name = occ["Occupation Name"] 
-        occ_soc = occ["SOC Code"] 
+        occ_soc = occ["SOC Code"]
+        occ_proj_growth = occ["Projected 10 Year Change"]
         occ_name_search = occ_name.lower().replace(" ","")
         occ_name_title = occ_name.title()
-        occ_name_html = [occ_name_search, occ_name_title, occ_soc]
+        occ_name_html = [occ_name_search, occ_name_title, occ_soc, occ_proj_growth]
         #occ_name_html = f"<option value='{occ_name_search}'>{occ_name.title()}</option>"
         occ_selector.append(occ_name_html)
 
@@ -63,7 +64,8 @@ def make_list_of_occ_choices(soc_list):
 
 def find_bls_data(job_soc):
     """
-    I am a docstring and darn it I should be informative
+    Takes: A string. 6 Digit SOC code, formatted with no dash.
+    Gives: a list of 
     """
     wage_response = requests.get("https://api.bls.gov/publicAPI/v2/timeseries/data/OEUS2600000000000"+job_soc+"08?registrationkey="+bls_secrets.api_key+"&latest=true")
     json_tst = wage_response.text
@@ -77,6 +79,7 @@ def find_bls_data(job_soc):
     current_emp = emp_list[0]['data'][0]['value']
     
     job_data = [current_emp, median_wage]
+    BLS_CACHE[job_soc] = job_data
 
     return job_data
 
@@ -84,16 +87,18 @@ def find_bls_data(job_soc):
 def search_postings(job_keyword):
     """
     I am a docstring and darn it I should be informative
-    You promised the total number of active postings and titles/ employers of first page results
+
     """
     indeed_response= requests.get('https://www.indeed.com/jobs?q='+ job_keyword +'&l=Ann+Arbor%2C+MI')
     soup = BeautifulSoup(indeed_response.text, 'html.parser')
 
-    results_number = soup.find('div', id="searchCountPages")
+    results_raw = soup.find('div', id="searchCountPages")
+    results_number = str(results_raw).split()[5]
     POSTING_parent = soup.find('td', id='resultsCol')
 
     postings = POSTING_parent.find_all('div', class_='jobsearch-SerpJobCard unifiedRow row result')
 
+    posting_fax = []
     your_available_openings_html = []
 
     for posting in postings:
@@ -103,9 +108,9 @@ def search_postings(job_keyword):
         test_posting_str = f"{test_posting_title} for {test_posting_employer}"
         your_available_openings_html.append(test_posting_str)
 
-    INDEED_CACHE[job_keyword] = [results_number, your_available_openings_html]
+    posting_fax = [results_number, your_available_openings_html]
 
-    return your_available_openings_html
+    return posting_fax
 
 
 def graph_wage(occupation, query_result_wage): 
@@ -125,8 +130,8 @@ in_demand = save_in_demand_jobs()
 options = make_list_of_occ_choices(in_demand)
 occ_dict = {}
 for occ in options:
-    occ_dict[occ[0]] = [occ[1], occ[2]]
-
+    occ_dict[occ[0]] = [occ[1], occ[2], occ[3]]
+#print(occ_dict)
 SOC_CACHE = save_in_demand_jobs()
 #print(SOC_CACHE)
 
@@ -139,13 +144,17 @@ def index():
 def handle_the_form():
     your_occupation = request.form["occupations"]
     nice_name = occ_dict[your_occupation][0]
+    search_name=nice_name.replace(" ","+")
+    growth = occ_dict[your_occupation][2]
     bls_result = find_bls_data(occ_dict[your_occupation][1])
     emp_graph = bls_result[0]
     wage_graph = graph_wage(nice_name, bls_result[1])
     div=wage_graph.to_html(full_html=False)
-    postings_list = search_postings(your_occupation)
+    postings_search = search_postings(search_name)
+    postings_list = postings_search[1]
+    total_postings = postings_search[0]
     return render_template('occupation_results.html', 
-        your_occupation=nice_name, current_emp=emp_graph, plot_div_2=div, results_list=postings_list)
+        your_occupation=nice_name, decade_projection=growth, current_emp=emp_graph, plot_div_2=div, results_count=total_postings, results_list=postings_list)
 
 
 if __name__ == '__main__':  

@@ -1,46 +1,46 @@
-﻿Occupation Name,SOC Code
-Accountants and Auditors,132011
-Carpenters,472031
-"Child, Family, and School Social Workers",211021
-Computer and Information Systems Managers,113021
-Computer User Support Specialists,151151
-Construction Managers,119021
-Cost Estimators,131051
-"Education Administrators, Postsecondary",119033
-"Educational, Guidance, and Career Counselors and Advisors",211012
-Electrical Engineers,172071
-Electricians,472111
-"Elementary School Teachers, Except Special Education",252021
-Financial Managers,113031
-General and Operations Managers,111021
-"Health Specialties Teachers, Postsecondary",251071
-Healthcare Social Workers,211022
-"Heating, Air Conditioning, and Refrigeration Mechanics and Installers",499021
-Heavy and Tractor-Trailer Truck Drivers,533032
-Industrial Engineers,172112
-Industrial Machinery Mechanics,499041
-Industrial Production Managers,113051
-Instructional Coordinators,259031
-Insurance Sales Agents,413021
-Lawyers,231011
-Loan Officers,132072
-Logisticians,131081
-Machinists,514041
-Management Analysts,131111
-Market Research Analysts and Marketing Specialists,131161
-Marketing Managers,112021
-Mechanical Engineers,172141
-Medical and Health Services Managers,119111
-"Middle School Teachers, Except Special and Career/ Tech Ed",252022
-Nurse Practitioners,291171
-Occupational Therapists,291122
-Operating Engineers and Other Construction Equipment Operators,472073
-Paralegals and Legal Assistants,232011
-Physical Therapist Assistants,312021
-Physical Therapists,291123
-"Plumbers, Pipefitters, and Steamfitters",472152
-Registered Nurses,291141
-"Secondary School Teachers, Except Special and Career/ Tech. Ed.",252031
-Social and Community Service Managers,119151
-"Software Developers, Applications",151132
-Speech-Language Pathologists,291127
+﻿Occupation Name,SOC Code,Projected 10 Year Change
+Accountants and Auditors,132011,4.3
+Carpenters,472031,-0.4
+"Child, Family, and School Social Workers",211021,11.7
+Computer and Information Systems Managers,113021,10.4
+Computer User Support Specialists,151151,8
+Construction Managers,119021,8.5
+Cost Estimators,131051,-1.5
+"Education Administrators, Postsecondary",119033,3.7
+"Educational, Guidance, and Career Counselors and Advisors",211012,8
+Electrical Engineers,172071,4.6
+Electricians,472111,8.4
+"Elementary School Teachers, Except Special Education",252021,3.5
+Financial Managers,113031,15.5
+General and Operations Managers,111021,5.8
+"Health Specialties Teachers, Postsecondary",251071,20.5
+Healthcare Social Workers,211022,14.4
+"Heating, Air Conditioning, and Refrigeration Mechanics and Installers",499021,4
+Heavy and Tractor-Trailer Truck Drivers,533032,1.5
+Industrial Engineers,172112,10.1
+Industrial Machinery Mechanics,499041,15.6
+Industrial Production Managers,113051,0.9
+Instructional Coordinators,259031,5.9
+Insurance Sales Agents,413021,5.5
+Lawyers,231011,4
+Loan Officers,132072,3.2
+Logisticians,131081,4.4
+Machinists,514041,4.2
+Management Analysts,131111,10.7
+Market Research Analysts and Marketing Specialists,131161,17.7
+Marketing Managers,112021,6.7
+Mechanical Engineers,172141,3.9
+Medical and Health Services Managers,119111,31.5
+"Middle School Teachers, Except Special and Career/ Tech Ed",252022,3.6
+Nurse Practitioners,291171,52.4
+Occupational Therapists,291122,15.9
+Operating Engineers and Other Construction Equipment Operators,472073,4
+Paralegals and Legal Assistants,232011,10.5
+Physical Therapist Assistants,312021,32.6
+Physical Therapists,291123,18.2
+"Plumbers, Pipefitters, and Steamfitters",472152,4.3
+Registered Nurses,291141,7.2
+"Secondary School Teachers, Except Special and Career/ Tech. Ed.",252031,3.8
+Social and Community Service Managers,119151,17
+"Software Developers, Applications",151132,21.5
+Speech-Language Pathologists,291127,24.9
