@@ -9,19 +9,6 @@ Welcome! This program allows you to select an occupation to view its current and
 Just select from the list of common occupations to get started. 
 
 """
-
-
-
-"""
-HTTP Type: 	GET
-URL (JSON): 	https://api.bls.gov/publicAPI/v2/timeseries/data/
-
-https://api.bls.gov/publicAPI/v2/timeseries/data/?&
-catalog=true&startyear=2010&endyear=2014&calculations=true &annualaverage=true&aspects=true
-
-
- """                   
-
  
 import json, requests, csv
 from bs4 import BeautifulSoup
@@ -38,7 +25,7 @@ app = Flask(__name__)
 
 def save_in_demand_jobs():
     with open('job_finder_seed_codes.csv', mode='r', newline='', encoding='utf-8-sig') as file_obj:
-            data = list(csv.DictReader(file_obj))
+        data = list(csv.DictReader(file_obj))
 
     SOC_CACHE = data
     return SOC_CACHE
@@ -65,57 +52,69 @@ def make_list_of_occ_choices(soc_list):
 def find_bls_data(job_soc):
     """
     Takes: A string. 6 Digit SOC code, formatted with no dash.
-    Gives: a list of 
+    Gives: a 2-item list of job facts for the State of Michigan
     """
-    wage_response = requests.get("https://api.bls.gov/publicAPI/v2/timeseries/data/OEUS2600000000000"+job_soc+"08?registrationkey="+bls_secrets.api_key+"&latest=true")
-    json_tst = wage_response.text
-    wage_list = json.loads(json_tst)["Results"]["series"]
-    median_wage = wage_list[0]['data'][0]['value']
-    print(median_wage)
+    if job_soc in BLS_CACHE.keys():
+        print("Using Cache")
+        return BLS_CACHE[job_soc]
+    else:
+        wage_response = requests.get("https://api.bls.gov/publicAPI/v2/timeseries/data/OEUS2600000000000"+job_soc+"08?registrationkey="+bls_secrets.api_key+"&latest=true")
+        json_tst = wage_response.text
+        wage_list = json.loads(json_tst)["Results"]["series"]
+        median_wage = wage_list[0]['data'][0]['value']
 
-    emp_response = requests.get("https://api.bls.gov/publicAPI/v2/timeseries/data/OEUS2600000000000"+job_soc+"01?registrationkey="+bls_secrets.api_key+"&latest=true")
-    json_tst2 = emp_response.text
-    emp_list = json.loads(json_tst2)["Results"]["series"]
-    current_emp = emp_list[0]['data'][0]['value']
+        emp_response = requests.get("https://api.bls.gov/publicAPI/v2/timeseries/data/OEUS2600000000000"+job_soc+"01?registrationkey="+bls_secrets.api_key+"&latest=true")
+        json_tst2 = emp_response.text
+        emp_list = json.loads(json_tst2)["Results"]["series"]
+        current_emp = emp_list[0]['data'][0]['value']
     
-    job_data = [current_emp, median_wage]
-    BLS_CACHE[job_soc] = job_data
+        job_data = [current_emp, median_wage]
+        BLS_CACHE[job_soc] = job_data
 
-    return job_data
+        return job_data
 
 
 def search_postings(job_keyword):
     """
-    I am a docstring and darn it I should be informative
+    Takes: A formatted string, the name of an occupation or other job keyword with spaces replaced by "+"
+    Gives: A list containing a string (the total number of postings active in Ann Arbor) and a list (details for first page of job openings)
 
     """
-    indeed_response= requests.get('https://www.indeed.com/jobs?q='+ job_keyword +'&l=Ann+Arbor%2C+MI')
-    soup = BeautifulSoup(indeed_response.text, 'html.parser')
+    if job_keyword in INDEED_CACHE.keys():
+        print("Using Cache")
+        return INDEED_CACHE[job_keyword]
+    else:
+        indeed_response= requests.get('https://www.indeed.com/jobs?q='+ job_keyword +'&l=Ann+Arbor%2C+MI')
+        soup = BeautifulSoup(indeed_response.text, 'html.parser')
 
-    results_raw = soup.find('div', id="searchCountPages")
-    results_number = str(results_raw).split()[5]
-    POSTING_parent = soup.find('td', id='resultsCol')
+        results_raw = soup.find('div', id="searchCountPages")
+        if results_raw == None:
+            results_number = "no"
+        else:
+            results_number = str(results_raw).split()[5]
+        POSTING_parent = soup.find('td', id='resultsCol')
 
-    postings = POSTING_parent.find_all('div', class_='jobsearch-SerpJobCard unifiedRow row result')
+        postings = POSTING_parent.find_all('div', class_='jobsearch-SerpJobCard unifiedRow row result')
 
-    posting_fax = []
-    your_available_openings_html = []
+        posting_fax = []
+        your_available_openings_html = []
 
-    for posting in postings:
-        posting_job_title = posting.find('a', class_="jobtitle turnstileLink")
-        test_posting_title = posting_job_title["title"]
-        test_posting_employer = posting.find('span', class_="company").text.strip()
-        test_posting_str = f"{test_posting_title} for {test_posting_employer}"
-        your_available_openings_html.append(test_posting_str)
+        for posting in postings:
+            posting_job_title = posting.find('a', class_="jobtitle turnstileLink")
+            test_posting_title = posting_job_title["title"]
+            test_posting_employer = posting.find('span', class_="company").text.strip()
+            test_posting_str = f"{test_posting_title} for {test_posting_employer}"
+            your_available_openings_html.append(test_posting_str)
 
-    posting_fax = [results_number, your_available_openings_html]
+        posting_fax = [results_number, your_available_openings_html]
+        INDEED_CACHE[job_keyword] = posting_fax
 
-    return posting_fax
+        return posting_fax
 
 
 def graph_wage(occupation, query_result_wage): 
     """
-    I am a docstring and darn it I should be informative
+    Makes a bar graph comparing MI median wage to the chosen occupation's BLS-obtained median wage
     """
     wages = [19.67, query_result_wage]
     jobs_to_compare = ["Michigan Median", occupation]
